@@ -28,7 +28,7 @@ class Motor:
             self._bus.shutdown()
             self._bus = None
     
-    def _send_and_receive(self, data, target_address=self.motor_address, timeout=1):
+    def _send_and_receive(self, data, target_address, timeout=1):
         """发送数据并接收响应"""
         try:
             self._connect()
@@ -60,8 +60,10 @@ class Motor:
     # write 2 byte 0x2B
     # write 4 byte 0x23
 
-    def read_voltage(self, target_address=self.motor_address):
+    def read_voltage(self, target_address=None):
         """读取电机电源电压"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 04 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -69,8 +71,10 @@ class Motor:
             return voltage
         return None
 
-    def read_current(self, target_address=self.motor_address):
+    def read_current(self, target_address=None):
         """读取电机母线电流"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 05 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -79,8 +83,10 @@ class Motor:
             return current
         return None
 
-    def read_speed(self, target_address=self.motor_address):
+    def read_speed(self, target_address=None):
         """读取电机实时速度"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("43 00 06 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -88,8 +94,10 @@ class Motor:
             return speed
         return None
     
-    def read_position(self, target_address=self.motor_address):
+    def read_position(self, target_address=None):
         """读取电机位置"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("43 00 08 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -97,8 +105,10 @@ class Motor:
             return position
         return None
     
-    def read_driver_temperature(self, target_address=self.motor_address):
+    def read_driver_temperature(self, target_address=None):
         """读取电机驱动器温度"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 0A 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -106,8 +116,10 @@ class Motor:
             return temperature
         return None
     
-    def read_motor_temperature(self, target_address=self.motor_address):
+    def read_motor_temperature(self, target_address=None):
         """读取电机温度"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 0B 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -115,18 +127,18 @@ class Motor:
             return temperature
         return None
     
-    def read_error(self, target_address=self.motor_address):
+    def read_error(self, target_address=None):
         """读取电机错误
         bit位 故障码 原因 解决方案
         bit0 0x01 电机超调 重启
         bit1 0x02 校准时，相电阻偏大 设置电机类型为"Gimbal"
         bit3 0x08 校准时，电流波动大 电机缺相或烧坏
-        bit4 0x10 校准时，电感偏大 增大”校准最大电压“参数
-        bit5 0x20 编码器带宽不合适 调整”编码器带宽“参数
-        bit6 0x40 磁编码器SPI通信出错 设置"编码器类型“或编码器接线有问题
-        bit7 0x80 编码器型号设置错误 重设”编码器类型“
+        bit4 0x10 校准时，电感偏大 增大"校准最大电压"参数
+        bit5 0x20 编码器带宽不合适 调整"编码器带宽"参数
+        bit6 0x40 磁编码器SPI通信出错 设置"编码器类型"或编码器接线有问题
+        bit7 0x80 编码器型号设置错误 重设"编码器类型"
         bit8 0x100 Hall电机尚未校准 零点校准
-        bit9 0x200 校准时，未读到编码器数据 设置”编码器类型“或编码器接线有问题
+        bit9 0x200 校准时，未读到编码器数据 设置"编码器类型"或编码器接线有问题
         bit10 0x400 cpr设置错误 重设编码器cpr
         bit11 0x800 运行状态错误 零点校准后再进入闭环状态
         bit15 0x8000 Hall电机信号错误 尚未校准，或者hal信号不支持
@@ -137,6 +149,8 @@ class Motor:
         bit23 0x800000 过压报警 降低电源电压
         bit24 0x1000000 过流报警 电机堵转或者功率过大
         """
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("43 00 0C 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -165,8 +179,10 @@ class Motor:
             return error_dict.get(error, f"未知错误: {error} (0x{error:X})")
         return None
 
-    def read_status(self, target_address=self.motor_address):
+    def read_status(self, target_address=None):
         """读取电机状态"""
+        if target_address is None:
+            target_address = self.motor_address
         current = self.read_current(target_address)
         voltage = self.read_voltage(target_address)
         speed = self.read_speed(target_address)
@@ -184,24 +200,30 @@ class Motor:
             "error": error
         }
     
-    def set_torque(self, torque, target_address=self.motor_address):
+    def set_torque(self, torque, target_address=None):
         """设置电机扭矩, default 0"""
-        torque_data = int(torque * 100).to_bytes(4, byteorder='big', signed=True)
-        data = bytes.fromhex("2B 00 20 00") + torque_data
+        if target_address is None:
+            target_address = self.motor_address
+        torque_data = int(torque * 100).to_bytes(2, byteorder='big', signed=True)
+        data = bytes.fromhex("2B 00 20 00") + torque_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def set_speed(self, speed, target_address=self.motor_address):
+    def set_speed(self, speed, target_address=None):
         """设置电机速度, default 0"""
+        if target_address is None:
+            target_address = self.motor_address
         speed_data = int(speed * 100).to_bytes(4, byteorder='big', signed=True)
         data = bytes.fromhex("23 00 21 00") + speed_data
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def move_absolute_position(self, position, target_address=self.motor_address):
+    def move_absolute_position(self, position, target_address=None):
         """移动到指定位置, default 0"""
+        if target_address is None:
+            target_address = self.motor_address
         position_data = int(position * 100).to_bytes(4, byteorder='big', signed=True)
         data = bytes.fromhex("23 00 23 00") + position_data
         print(data)
@@ -209,16 +231,20 @@ class Motor:
         
         return response is not None
     
-    def move_relative_position(self, position, target_address=self.motor_address):
+    def move_relative_position(self, position, target_address=None):
         """相对移动指定位置, default 0"""
+        if target_address is None:
+            target_address = self.motor_address
         position_data = int(position * 100).to_bytes(4, byteorder='big', signed=True)
         data = bytes.fromhex("23 00 25 00") + position_data
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_motor_address(self, target_address=self.motor_address):
+    def read_motor_address(self, target_address=None):
         """读取电机地址, default 1"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 40 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -226,16 +252,21 @@ class Motor:
             return address
         return None
 
-    def set_motor_address(self, address, target_address=self.motor_address):
-        """设置电机地址, default 1, 1-127"""
-        address_data = int(address).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 40 00") + address_data
+    def set_motor_address(self, address, target_address=None):
+        """设置电机地址, default 1, 1-128"""
+        if target_address is None:
+            target_address = self.motor_address
+        address_data = int(address).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 40 00") + address_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
-        
         return response is not None
     
-    def read_CAN_baudrate(self, target_address=self.motor_address):
+    # here skipped a read serial baudrate function
+
+    def read_CAN_baudrate(self, target_address=None):
         """读取CAN波特率, default 6:500k"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 42 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -254,7 +285,7 @@ class Motor:
             return baudrate_dict.get(baudrate, f"未知波特率: {baudrate}")
         return None
     
-    def set_CAN_baudrate(self, baudrate, target_address=self.motor_address):
+    def set_CAN_baudrate(self, baudrate, target_address=None):
         """设置CAN波特率, default 6:500k
         0:10k
         1:20k
@@ -266,13 +297,15 @@ class Motor:
         7:800k
         8:1M
         """
-        baudrate_data = int(baudrate).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 42 00") + baudrate_data
+        if target_address is None:
+            target_address = self.motor_address
+        baudrate_data = int(baudrate).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 42 00") + baudrate_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_motor_type(self, target_address=self.motor_address):
+    def read_motor_type(self, target_address=None):
         """读取电机类型, default 0, 0=HighCurrent,1=Gimbal
         0 = HighCurrent高电流模式
         适用于 高扭矩、高负载 的应用，比如驱动轮、机械臂、电机关节等。
@@ -283,6 +316,8 @@ class Motor:
         主要用于平稳控制，通常采用较低的电流来避免过热和振动。
         适合小电流、精细调节的应用。
         """
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 50 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -294,18 +329,22 @@ class Motor:
             return motor_type_dict.get(motor_type, f"未知电机类型: {motor_type}")
         return None
     
-    def set_motor_type(self, motor_type, target_address=self.motor_address):
+    def set_motor_type(self, motor_type, target_address=None):
         """设置电机类型, default 0, 0=HighCurrent,1=Gimbal"""
-        motor_type_data = int(motor_type).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 50 00") + motor_type_data
+        if target_address is None:
+            target_address = self.motor_address
+        motor_type_data = int(motor_type).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 50 00") + motor_type_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     # 此处有校准和编码器相关参数 没有写专门的 function
 
-    def read_motor_direction(self, target_address=self.motor_address):
+    def read_motor_direction(self, target_address=None):
         """读取电机方向, default 0, 0=Forward,1=Reverse"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 58 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -317,16 +356,20 @@ class Motor:
             return motor_direction_dict.get(motor_direction, f"未知电机方向: {motor_direction}")
         return None
     
-    def set_motor_direction(self, motor_direction, target_address=self.motor_address):
+    def set_motor_direction(self, motor_direction, target_address=None):
         """设置电机方向, default 0, 0=Forward,1=Reverse"""
-        motor_direction_data = int(motor_direction).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 58 00") + motor_direction_data
+        if target_address is None:
+            target_address = self.motor_address
+        motor_direction_data = int(motor_direction).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 58 00") + motor_direction_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
 
-    def read_torque_constant(self, target_address=self.motor_address):
+    def read_torque_constant(self, target_address=None):
         """读取扭矩常数, default 0.04, range 0-60"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 59 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -334,15 +377,17 @@ class Motor:
             return torque_constant
         return None
     
-    def set_torque_constant(self, torque_constant, target_address=self.motor_address):
+    def set_torque_constant(self, torque_constant, target_address=None):
         """设置扭矩常数, default 0.04, range 0-60"""
-        torque_constant_data = int(torque_constant * 1000).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 59 00") + torque_constant_data
+        if target_address is None:
+            target_address = self.motor_address
+        torque_constant_data = int(torque_constant * 1000).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 59 00") + torque_constant_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_control_mode(self, target_address=self.motor_address):
+    def read_control_mode(self, target_address=None):
         """读取控制模式, default 1:速度模式
         0:力矩模式
         1:速度模式
@@ -350,6 +395,8 @@ class Motor:
         3:位置滤波模式
         4:位置直通模式
         """
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 60 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -364,7 +411,7 @@ class Motor:
             return mode_dict.get(mode, f"未知模式: {mode}")
         return None
 
-    def set_control_mode(self, mode, target_address=self.motor_address):
+    def set_control_mode(self, mode, target_address=None):
         """设置控制模式, 0-4, default 1
         0:力矩模式
         1:速度模式
@@ -372,44 +419,58 @@ class Motor:
         3:位置滤波模式
         4:位置直通模式
         """
-        mode_data = int(mode).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 60 00") + mode_data
+        if target_address is None:
+            target_address = self.motor_address
+        mode_data = int(mode).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 60 00") + mode_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
 
-    def set_torque_mode(self, target_address=self.motor_address):
+    def set_torque_mode(self, target_address=None):
         """设置扭矩模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 60 00 00 00 00 00"), target_address)
         
         return response is not None
 
-    def set_speed_mode(self, target_address=self.motor_address):
+    def set_speed_mode(self, target_address=None):
         """切换为速度模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 60 00 00 01 00 00"), target_address)
         
         return response is not None
     # 位置控制  
-    def set_position_mode_trapezoidal(self, target_address=self.motor_address):
+    def set_position_mode_trapezoidal(self, target_address=None):
         """切换为位置梯形轨迹模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 60 00 00 02 00 00"), target_address)
         
         return response is not None
 
-    def set_position_mode_filter(self, target_address=self.motor_address):
+    def set_position_mode_filter(self, target_address=None):
         """切换为位置滤波模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 60 00 00 03 00 00"), target_address)
         
         return response is not None
     
-    def set_position_mode_direct(self, target_address=self.motor_address):
+    def set_position_mode_direct(self, target_address=None):
         """切换为位置直接模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 60 00 00 04 00 00"), target_address)
         
         return response is not None
 
-    def read_max_current(self, target_address=self.motor_address):
+    def read_max_current(self, target_address=None):
         """读取设定的最大电流, default 5, range 0.1-20"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 61 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -417,16 +478,20 @@ class Motor:
             return max_current
         return None
     
-    def set_max_current(self, current, target_address=self.motor_address):
+    def set_max_current(self, current, target_address=None):
         """设置最大电流 0.1-20, default 5"""
-        current_data = int(current * 100).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 61 00") + current_data
+        if target_address is None:
+            target_address = self.motor_address
+        current_data = int(current * 100).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 61 00") + current_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
 
-    def read_max_speed(self, target_address=self.motor_address):
+    def read_max_speed(self, target_address=None):
         """读取设定的最大速度 0-10000, default 5000"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 62 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -434,199 +499,235 @@ class Motor:
             return max_speed
         return None
     
-    def set_max_speed(self, speed, target_address=self.motor_address):
+    def set_max_speed(self, speed, target_address=None):
         """设置最大速度 0-10000, default 5000"""
-        speed_data = int(speed).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 62 00") + speed_data
+        if target_address is None:
+            target_address = self.motor_address
+        speed_data = int(speed).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 62 00") + speed_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_torque_ramp_rate(self, target_address=self.motor_address):
+    def read_torque_ramp_rate(self, target_address=None):
         """读取扭矩上升率, default 0.1"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 63 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             torque_ramp_rate = int.from_bytes(response.data[4:6], byteorder='big') / 100
             return torque_ramp_rate
         return None
 
-    def set_torque_ramp_rate(self, rate, target_address=self.motor_address):
+    def set_torque_ramp_rate(self, rate, target_address=None):
         """设置扭矩上升率 0.01-100, default 0.1"""
-        rate_data = int(rate * 100).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 63 00") + rate_data
+        if target_address is None:
+            target_address = self.motor_address
+        rate_data = int(rate * 100).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 63 00") + rate_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_speed_ramp_rate(self, target_address=self.motor_address):
+    def read_speed_ramp_rate(self, target_address=None):
         """读取速度上升率, default 2000"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 64 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             speed_ramp_rate = int.from_bytes(response.data[4:6], byteorder='big')
             return speed_ramp_rate
         return None
     
-    def set_speed_ramp_rate(self, rate, target_address=self.motor_address):
+    def set_speed_ramp_rate(self, rate, target_address=None):
         """设置速度上升率 1-10000, default 2000"""
-        rate_data = int(rate).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 64 00") + rate_data
+        if target_address is None:
+            target_address = self.motor_address
+        rate_data = int(rate).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 64 00") + rate_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_speed_kp(self, target_address=self.motor_address):
+    def read_speed_kp(self, target_address=None):
         """读取速度Kp, default 0.02"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 65 00 00 00 00 00"), target_address)
         if response and len(response.data) >= 6:
             speed_kp = int.from_bytes(response.data[4:6], byteorder='big') / 1000
             return speed_kp
         return None
     
-    def set_speed_kp(self, kp, target_address=self.motor_address):
+    def set_speed_kp(self, kp, target_address=None):
         """设置速度Kp 0-60, default 0.02"""
-        kp_data = int(kp * 1000).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 65 00") + kp_data
+        if target_address is None:
+            target_address = self.motor_address
+        kp_data = int(kp * 1000).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 65 00") + kp_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def read_speed_ki(self, target_address=self.motor_address):
+    def read_speed_ki(self, target_address=None):
         """读取速度Ki, default 0.2"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 66 00 00 00 00 00"), target_address)
         if response and len(response.data) >= 6:
             speed_ki = int.from_bytes(response.data[4:6], byteorder='big') / 1000
             return speed_ki
         return None
     
-    def set_speed_ki(self, ki, target_address=self.motor_address):
+    def set_speed_ki(self, ki, target_address=None):
         """设置速度Ki 0-60, default 0.2"""
-        ki_data = int(ki * 1000).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 66 00") + ki_data
+        if target_address is None:
+            target_address = self.motor_address
+        ki_data = int(ki * 1000).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 66 00") + ki_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
-        
         return response is not None
 
-    def read_position_kp(self, target_address=self.motor_address):
+    def read_position_kp(self, target_address=None):
         """读取位置Kp, 1-500, default 20"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 67 00 00 00 00 00"), target_address)
         if response and len(response.data) >= 6:
             position_kp = int.from_bytes(response.data[4:6], byteorder='big') / 10
             return position_kp
         return None
     
-    def set_position_kp(self, kp, target_address=self.motor_address):
+    def set_position_kp(self, kp, target_address=None):
         """设置位置Kp 1-500, default 20"""
-        kp_data = int(kp * 10).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 67 00") + kp_data
+        if target_address is None:
+            target_address = self.motor_address
+        kp_data = int(kp * 10).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 67 00") + kp_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
-        
         return response is not None
     
-    def read_trapezoidal_speed_limit(self, target_address=self.motor_address):
+    def read_trapezoidal_speed_limit(self, target_address=None):
         """读取梯形轨迹速度限制, default 2000, range 1-10000"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 68 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             trapezoidal_speed_limit = int.from_bytes(response.data[4:6], byteorder='big')
             return trapezoidal_speed_limit
         return None
     
-    def set_trapezoidal_speed_limit(self, speed, target_address=self.motor_address):
+    def set_trapezoidal_speed_limit(self, speed, target_address=None):
         """设置梯形轨迹速度限制, default 2000, range 1-10000"""
-        speed_data = int(speed).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 68 00") + speed_data
+        if target_address is None:
+            target_address = self.motor_address
+        speed_data = int(speed).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 68 00") + speed_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
 
-    def read_trapezoidal_acceleration_limit(self, target_address=self.motor_address):
+    def read_trapezoidal_acceleration_limit(self, target_address=None):
         """读取梯形轨迹加速度限制, default 2000, range 1-10000"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 69 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             trapezoidal_acceleration_limit = int.from_bytes(response.data[4:6], byteorder='big')
             return trapezoidal_acceleration_limit
         return None
     
-    def set_trapezoidal_acceleration_limit(self, acceleration, target_address=self.motor_address):
+    def set_trapezoidal_acceleration_limit(self, acceleration, target_address=None):
         """设置梯形轨迹加速度限制, default 2000, range 1-10000"""
-        acceleration_data = int(acceleration).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 69 00") + acceleration_data
+        if target_address is None:
+            target_address = self.motor_address
+        acceleration_data = int(acceleration).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 69 00") + acceleration_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
 
-    def read_trapezoidal_deceleration_limit(self, target_address=self.motor_address):
+    def read_trapezoidal_deceleration_limit(self, target_address=None):
         """读取梯形轨迹减速度限制, default 2000, range 1-10000"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 6A 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             trapezoidal_deceleration_limit = int.from_bytes(response.data[4:6], byteorder='big')
             return trapezoidal_deceleration_limit
         return None
 
-    def set_trapezoidal_deceleration_limit(self, deceleration, target_address=self.motor_address):
+    def set_trapezoidal_deceleration_limit(self, deceleration, target_address=None):
         """设置梯形轨迹减速度限制, default 2000, range 1-10000"""
-        deceleration_data = int(deceleration).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 6A 00") + deceleration_data
+        if target_address is None:
+            target_address = self.motor_address
+        deceleration_data = int(deceleration).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 6A 00") + deceleration_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None 
     
-    def read_filter_bandwidth(self, target_address=self.motor_address):
+    def read_filter_bandwidth(self, target_address=None):
         """读取滤波带宽, default 4, range 0.1-1000"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 6B 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             filter_bandwidth = int.from_bytes(response.data[4:6], byteorder='big') / 10
             return filter_bandwidth
         return None
     
-    def set_filter_bandwidth(self, bandwidth, target_address=self.motor_address):
+    def set_filter_bandwidth(self, bandwidth, target_address=None):
         """设置滤波带宽, default 4, range 0.1-1000"""
-        bandwidth_data = int(bandwidth * 10).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 6B 00") + bandwidth_data
+        if target_address is None:
+            target_address = self.motor_address
+        bandwidth_data = int(bandwidth * 10).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 6B 00") + bandwidth_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
-        
         return response is not None
     
     #保护与使能
     #驱动器保护温度
-    def read_driver_protection_temperature(self, target_address=self.motor_address):
+    def read_driver_protection_temperature(self, target_address=None):
         """读取驱动器保护温度, default 100, range 50-150"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 80 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             driver_protection_temperature = int.from_bytes(response.data[4:6], byteorder='big')
             return driver_protection_temperature
         return None
     
-    def set_driver_protection_temperature(self, temperature, target_address=self.motor_address):
+    def set_driver_protection_temperature(self, temperature, target_address=None):
         """设置驱动器保护温度, default 100, range 50-150"""
-        temperature_data = int(temperature).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 80 00") + temperature_data
+        if target_address is None:
+            target_address = self.motor_address
+        temperature_data = int(temperature).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 80 00") + temperature_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     #驱动器保护使能
-    def enable_driver_protection(self, enable, target_address=self.motor_address):
+    def enable_driver_protection(self, enable, target_address=None):
         """设置驱动器保护使能, default 0, range 0-2
         0: 关闭
         1: 开启（不可恢复）
         2: 开启（可恢复）
         """
-        enable_data = int(enable).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 81 00") + enable_data
+        if target_address is None:
+            target_address = self.motor_address
+        enable_data = int(enable).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 81 00") + enable_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     #电机保护温度
-    def read_motor_protection_temperature(self, target_address=self.motor_address):
+    def read_motor_protection_temperature(self, target_address=None):
         """读取电机保护温度, default 100, range 50-150"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 82 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -634,30 +735,36 @@ class Motor:
             return motor_protection_temperature
         return None
     
-    def set_motor_protection_temperature(self, temperature, target_address=self.motor_address):
+    def set_motor_protection_temperature(self, temperature, target_address=None):
         """设置电机保护温度, default 100, range 50-150"""
-        temperature_data = int(temperature).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 82 00") + temperature_data
+        if target_address is None:
+            target_address = self.motor_address
+        temperature_data = int(temperature).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 82 00") + temperature_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None 
     
     #电机保护使能
-    def enable_motor_protection(self, enable, target_address=self.motor_address):  
+    def enable_motor_protection(self, enable, target_address=None):  
         """设置电机保护使能, default 0, range 0-2
         0: 关闭
         1: 开启（不可恢复）
         2: 开启（可恢复）
         """
-        enable_data = int(enable).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 83 00") + enable_data
+        if target_address is None:
+            target_address = self.motor_address
+        enable_data = int(enable).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 83 00") + enable_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     #低压保护
-    def read_low_voltage_protection(self, target_address=self.motor_address):
+    def read_low_voltage_protection(self, target_address=None):
         """读取低压保护, default 7, range 7-24"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 84 00 00 00 00 00"), target_address)
         
         if response and len(response.data) >= 6:
@@ -665,108 +772,127 @@ class Motor:
             return low_voltage_protection
         return None
     
-    def set_low_voltage_protection(self, voltage, target_address=self.motor_address):
+    def set_low_voltage_protection(self, voltage, target_address=None):
         """设置低压保护, default 7, range 7-24"""
-        voltage_data = int(voltage * 10).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 84 00") + voltage_data
+        if target_address is None:
+            target_address = self.motor_address
+        voltage_data = int(voltage * 10).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 84 00") + voltage_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
 
-    def enable_low_voltage_protection(self, enable, target_address=self.motor_address):
+    def enable_low_voltage_protection(self, enable, target_address=None):
         """设置低压保护使能, default 0, range 0-2
         0: 关闭
         1: 开启（不可恢复）
         2: 开启（可恢复）
         """
-        enable_data = int(enable).to_bytes(4, byteorder='big')   
-        data = bytes.fromhex("2B 00 85 00") + enable_data
+        if target_address is None:
+            target_address = self.motor_address
+        enable_data = int(enable).to_bytes(2, byteorder='big')   
+        data = bytes.fromhex("2B 00 85 00") + enable_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     #过压保护
-    def read_over_voltage_protection(self, target_address=self.motor_address):
+    def read_over_voltage_protection(self, target_address=None):
         """读取过压保护, default 42, range 12-60"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 86 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             over_voltage_protection = int.from_bytes(response.data[4:6], byteorder='big') / 10
             return over_voltage_protection
         return None
     
-    def set_over_voltage_protection(self, voltage, target_address=self.motor_address):
+    def set_over_voltage_protection(self, voltage, target_address=None):
         """设置过压保护, default 42, range 12-60"""
-        voltage_data = int(voltage * 10).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 86 00") + voltage_data
+        if target_address is None:
+            target_address = self.motor_address
+        voltage_data = int(voltage * 10).to_bytes(2, byteorder='big')   
+        data = bytes.fromhex("2B 00 86 00") + voltage_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None 
     
-    def enable_over_voltage_protection(self, enable, target_address=self.motor_address):
+    def enable_over_voltage_protection(self, enable, target_address=None):
         """设置过压保护使能, default 0, range 0-2
         0: 关闭
         1: 开启（不可恢复）
         2: 开启（可恢复）
         """
-        enable_data = int(enable).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 87 00") + enable_data
+        if target_address is None:
+            target_address = self.motor_address
+        enable_data = int(enable).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 87 00") + enable_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     #过流保护
-    def read_over_current_protection(self, target_address=self.motor_address):
+    def read_over_current_protection(self, target_address=None):
         """读取过流保护, default 10, range 0.1-100"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 88 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             over_current_protection = int.from_bytes(response.data[4:6], byteorder='big') / 100
             return over_current_protection
     
-    def set_over_current_protection(self, current, target_address=self.motor_address):
+    def set_over_current_protection(self, current, target_address=None):
         """设置过流保护, default 10, range 0.1-100"""
-        current_data = int(current * 100).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 88 00") + current_data
+        if target_address is None:
+            target_address = self.motor_address
+        current_data = int(current * 100).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 88 00") + current_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
-    def enable_over_current_protection(self, enable, target_address=self.motor_address):
+    def enable_over_current_protection(self, enable, target_address=None):
         """设置过流保护使能, default 0, range 0-2
         0: 关闭
         1: 开启（不可恢复）
         2: 开启（可恢复）
         """
-        enable_data = int(enable).to_bytes(4, byteorder='big')
-        data = bytes.fromhex("2B 00 89 00") + enable_data
+        if target_address is None:
+            target_address = self.motor_address
+        enable_data = int(enable).to_bytes(2, byteorder='big')
+        data = bytes.fromhex("2B 00 89 00") + enable_data + bytes.fromhex("00 00")
         response = self._send_and_receive(data, target_address)
         
         return response is not None
     
     #设置状态    
-    def enter_idle_mode(self, target_address=self.motor_address):
+    def enter_idle_mode(self, target_address=None):
         """进入空闲模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 A0 00 00 01 00 00"), target_address)
         
         return response is not None
 
     #校准电机   
-    def calibrate(self, target_address=self.motor_address):
+    def calibrate(self, target_address=None):
         """校准电机"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 A1 00 00 01 00 00"), target_address)
         
         return response is not None
     
-    def read_calibration_status(self, target_address=self.motor_address):
+    def read_calibration_status(self, target_address=None):
         """读取校准状态 0-3
         0: 校准中
         1: 校准完成
         2: 校准失败
         3: 未校准
         """
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("4B 00 C2 00 00 00 00 00"), target_address)
-        
         if response and len(response.data) >= 6:
             calibration_status = int.from_bytes(response.data[4:6], byteorder='big')
             calibration_status_dict = {
@@ -778,50 +904,57 @@ class Motor:
             return calibration_status_dict[calibration_status]
         return None
 
-    def enter_closed_loop(self, target_address=self.motor_address):
+    def enter_closed_loop(self, target_address=None):
         """进入闭环模式"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 A2 00 00 01 00 00"), target_address)
-        
         return response is not None
 
-    def erase(self, target_address=self.motor_address):
+    def erase(self, target_address=None):
         """擦除电机参数"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 A3 00 00 01 00 00"), target_address)
-        
         return response is not None
 
-    def save(self, target_address=self.motor_address):
+    def save(self, target_address=None):
         """保存电机参数"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 A4 00 00 01 00 00"), target_address)
-        
         return response is not None
     
-    def restart(self, target_address=self.motor_address):
+    def restart(self, target_address=None):
         """重启电机"""
+        if target_address is None:
+            target_address = self.motor_address
         response = self._send_and_receive(bytes.fromhex("2B 00 A5 00 00 01 00 00"), target_address)
-        
         return response is not None
     
     # 上电是否不再校准
-    def set_power_on_no_calibration(self, enable, target_address=self.motor_address):
+    def set_power_on_no_calibration(self, enable, target_address=None):
         """设置上电是否不再校准, default 0, range 0-1
         0: 校准
         1: 不校准
-        这个命令会导致之前的设置不能保存 不知为何
         """
+        if target_address is None:
+            target_address = self.motor_address
         if enable == 0:
-            data = bytes.fromhex("2B 00 C0 00 00 01 00 00")
-        else:
             data = bytes.fromhex("2B 00 C0 00 00 00 00 00")
+        else:
+            data = bytes.fromhex("2B 00 C0 00 00 01 00 00")
         response = self._send_and_receive(data, target_address)
         return response is not None
     
     #上电是否进入闭环
-    def set_power_on_closed_loop(self, enable, target_address=self.motor_address):
+    def set_power_on_closed_loop(self, enable, target_address=None):
         """设置上电是否进入闭环, default 0, range 0-1
         0: 不进入闭环
         1: 进入闭环
         """
+        if target_address is None:
+            target_address = self.motor_address
         if enable == 0:
             data = bytes.fromhex("2B 00 C1 00 00 00 00 00")
         else:
